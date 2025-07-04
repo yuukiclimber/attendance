@@ -99,13 +99,6 @@ input[type="text"]#memo {
   text-align: center;
 }
 
-/* .calendar-nav button {
-  margin: 0 6px;
-  font-size: 0.9em;
-  padding: 3px 8px;
-  cursor: pointer;
-} */
-
 .log-container {
   max-height: 250px;
   overflow-y: auto;

@@ -1,58 +1,55 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-	<meta charset="UTF-8" />
-	<title>勤怠管理アプリ（メモ機能付き）</title>
-	<link rel="stylesheet" href="css/style.css" />
+  <meta charset="UTF-8" />
+  <title>勤怠管理アプリ（メモ機能付き）</title>
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-	<h1>勤怠管理</h1>
-	<label>日付：<input type="date" id="date" /></label>
-	<label>開始時間：<input type="time" id="start" /></label>
-	<label>終了時間：<input type="time" id="end" /></label>
-	<label>メモ：<input type="text" id="memo" placeholder="メモを入力" /></label>
-	<button onclick="record()">記録する</button>
-	<div class="log-container">
-		<table class="log-table">
-			<thead>
-				<tr>
-					<th>日付</th><th>開始</th><th>終了</th><th>労働時間</th><th>メモ</th><th>操作</th>
-				</tr>
-			</thead>
-			<tbody id="log"></tbody>
-		</table>
-	</div>
-	<!-- カレンダー集計表示 -->
-	<div class="calendar-container">
-		<div class="calendar-header" id="calendar-header"></div>
-		<div class="calendar-nav">
-			<button onclick="changeMonth(-1)">前の月</button>
-			<button onclick="changeMonth(1)">次の月</button>
-		</div>
-		<table id="calendar">
-			<thead>
-				<tr>
-					<th>月</th>
-					<th>火</th>
-					<th>水</th>
-					<th>木</th>
-					<th>金</th>
-					<th>土</th>
-					<th>日</th>
-					<th class="week-total">週合計</th>
-				</tr>
-			</thead>
-			<tbody id="calendar-body"></tbody>
-		</table>
-	</div>
-	<div class="summary" id="summary"></div>
-	<!-- インポート -->
-	<input type="file" id="importFile" accept=".json" />
-	<button onclick="importData()">インポート</button>
+  <h1>勤怠管理</h1>
+  <label>日付：<input type="date" id="date" /></label>
+  <label>開始時間：<input type="time" id="start" /></label>
+  <label>終了時間：<input type="time" id="end" /></label>
+  <label>メモ：<input type="text" id="memo" placeholder="メモを入力" /></label>
+  <button id="recordBtn">記録する</button>
 
-	<!-- エクスポート -->
-	<button onclick="exportData()">エクスポート</button>
+  <div class="log-container">
+    <table class="log-table">
+      <thead>
+        <tr>
+          <th>日付</th><th>開始</th><th>終了</th><th>労働時間</th><th>メモ</th><th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="log"></tbody>
+    </table>
+  </div>
 
-	<script src="js/main.js"></script>
+  <!-- カレンダー集計表示 -->
+  <div class="calendar-container">
+    <div class="calendar-header" id="calendar-header"></div>
+    <div class="calendar-nav">
+      <button id="prevMonthBtn">前の月</button>
+      <button id="nextMonthBtn">次の月</button>
+    </div>
+    <table id="calendar">
+      <thead>
+        <tr>
+          <th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th>土</th><th>日</th><th class="week-total">週合計</th>
+        </tr>
+      </thead>
+      <tbody id="calendar-body"></tbody>
+    </table>
+  </div>
+
+  <div class="summary" id="summary"></div>
+
+  <!-- インポート -->
+  <input type="file" id="importFile" accept=".json" />
+  <button id="importBtn">インポート</button>
+
+  <!-- エクスポート -->
+  <button id="exportBtn">エクスポート</button>
+
+  <script src="js/main.js"></script>
 </body>
 </html>
