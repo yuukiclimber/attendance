@@ -1,0 +1,130 @@
+body {
+  font-family: sans-serif;
+  margin: 2em;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 1em;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 6px;
+  text-align: center;
+}
+
+button {
+  font-size: 1.1em;
+  padding: 4px 8px;
+  margin: 0 2px;
+  cursor: pointer;
+}
+
+.summary {
+  margin-top: 1em;
+  font-weight: bold;
+}
+
+input[type="date"],
+input[type="time"],
+input[type="text"] {
+  font-size: 1.1em;
+  padding: 4px 6px;
+  width: 140px;
+  margin-right: 8px;
+}
+
+input[type="text"]#memo {
+  width: 260px;
+}
+
+/* カレンダー用スタイル */
+.calendar-container {
+  margin-top: 2em;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#calendar {
+  border-collapse: collapse;
+  width: auto;
+  margin-top: 0.5em;
+  table-layout: fixed;
+  font-size: 0.85em;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#calendar th, #calendar td {
+  border: 1px solid #ccc;
+  padding: 4px 2px;
+  vertical-align: top;
+  height: 60px;
+  text-align: left;
+  word-wrap: break-word;
+  width: 50px;
+  min-width: 70px;
+  max-width: 70px;
+  overflow-wrap: break-word;
+}
+
+#calendar th.week-total, #calendar td.week-total {
+  width: 70px;
+  min-width: 70px;
+  max-width: 70px;
+  text-align: right;
+  font-weight: bold;
+  background-color: #fafafa;
+  padding-right: 6px;
+  white-space: nowrap;
+}
+
+#calendar th {
+  background-color: #f0f0f0;
+  text-align: center;
+}
+
+.calendar-header {
+  font-size: 1.2em;
+  font-weight: bold;
+  text-align: center;
+  user-select: none;
+}
+
+.calendar-nav {
+  margin-bottom: 0.3em;
+  text-align: center;
+}
+
+/* .calendar-nav button {
+  margin: 0 6px;
+  font-size: 0.9em;
+  padding: 3px 8px;
+  cursor: pointer;
+} */
+
+.log-container {
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+}
+
+.log-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed; /* ←列幅を均等にする */
+}
+
+.log-table th, .log-table td {
+  border: 1px solid #ccc;
+  padding: 6px;
+  text-align: center;
+  word-break: break-word;
+}
+
+#calendar td.other-month {
+  color: #aaa;
+}
