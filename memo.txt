@@ -1,0 +1,6 @@
+ローカルで表示確認する方法
+ターミナルで
+python3 -m http.server 8000
+
+ブラウザで
+http://localhost:8000
