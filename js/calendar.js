@@ -116,7 +116,7 @@ function renderCalendar() {
   const firstDay = new Date(currentYear, currentMonth, 1);
   const lastDay = new Date(currentYear, currentMonth + 1, 0);
   let firstWeekday = firstDay.getDay();
-  firstWeekday = (firstWeekday === 0) ? 6 : firstWeekday - 1;
+//   firstWeekday = (firstWeekday === 0) ? 6 : firstWeekday - 1;
 
   const dailyTotals = getAllDailyTotals();
   const weeklyTotalsByWeekStart = {}; // 週開始日ごとの合計を計算するオブジェクト
