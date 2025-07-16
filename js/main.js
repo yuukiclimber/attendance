@@ -1,7 +1,15 @@
+// main.js
+// 勤怠ログの主要なロジックとデータ管理を行うファイル
+
 const storageKey = "kintai_log";
 let log = JSON.parse(localStorage.getItem(storageKey) || "[]");
 let editingIndex = null; // 編集中のインデックス保持用
 
+
+
+/**
+ * 勤怠記録を保存し、表示を更新します。
+ */
 function record() {
   const date = document.getElementById("date").value || new Date().toISOString().slice(0,10);
   const start = document.getElementById("start").value;
@@ -35,8 +43,13 @@ function record() {
   saveAndRender();
 }
 
+/**
+ * 勤怠記録をテーブルとサマリーに描画します。
+ */
 function render() {
   const tbody = document.getElementById("log");
+  if (!tbody) return; // tbodyが存在しない場合は処理を終了
+
   tbody.innerHTML = "";
 
   log.sort((a, b) => (a.date + "T" + a.start) > (b.date + "T" + b.start) ? -1 : 1);
@@ -57,9 +70,17 @@ function render() {
   });
 
   renderSummary();
-  renderCalendar();
+  // カレンダーの描画は calendar.js の関数を呼び出す
+  // log データに変更があった場合はカレンダーも更新する必要があるため、呼び出しが必要です。
+  if (typeof renderCalendar === 'function') {
+    renderCalendar();
+  }
 }
 
+/**
+ * 既存の勤怠記録を編集するためにフォームにデータをセットします。
+ * @param {number} index - 編集対象の記録のインデックス
+ */
 function editRow(index) {
   const row = log[index];
   document.getElementById("date").value = row.date;
@@ -70,6 +91,10 @@ function editRow(index) {
   document.querySelector("button").textContent = "更新する";
 }
 
+/**
+ * 勤怠記録を削除します。
+ * @param {number} index - 削除対象の記録のインデックス
+ */
 function deleteRow(index) {
   if (confirm("この記録を削除しますか？")) {
     log.splice(index, 1);
@@ -77,20 +102,17 @@ function deleteRow(index) {
   }
 }
 
+/**
+ * 勤怠記録をLocalStorageに保存し、表示を更新します。
+ */
 function saveAndRender() {
   localStorage.setItem(storageKey, JSON.stringify(log));
   render();
 }
 
-// 週の開始日（月曜）を取得
-function getWeekStartDate(dateStr) {
-  const d = new Date(dateStr);
-  const day = d.getDay();
-  const diff = (day === 0 ? -6 : 1 - day);
-  d.setDate(d.getDate() + diff);
-  return d.toISOString().slice(0, 10);
-}
-
+/**
+ * 月別・週別の労働時間サマリーを表示します。
+ */
 function renderSummary() {
   const summaryMonth = {};
   const summaryWeek = {};
@@ -104,211 +126,24 @@ function renderSummary() {
   });
 
   const summaryDiv = document.getElementById("summary");
-  summaryDiv.innerHTML =
-    "📊 月別労働時間：<br>" +
-    Object.entries(summaryMonth).map(([m,t]) => `${m}: ${formatHours(t)} 時間`).join("<br>") +
-    "<br><br>" +
-    "📅 週別労働時間：<br>" +
-    Object.entries(summaryWeek).map(([w,t]) => `${w}: ${formatHours(t)} 時間`).join("<br>");
-}
-
-// カレンダー表示用変数
-let currentYear, currentMonth;
-
-// 小数点以下のゼロを除去して文字列化する関数
-function formatHours(hours) {
-  const n = Number(hours);
-  return Number.isInteger(n) ? n.toString() : n.toFixed(2).replace(/\.?0+$/, "");
-}
-
-// カレンダー初期化
-function initCalendar() {
-  const today = new Date();
-  currentYear = today.getFullYear();
-  currentMonth = today.getMonth(); // 0=1月
-  renderCalendar();
-}
-
-// 月を切り替え
-function changeMonth(diff) {
-  currentMonth += diff;
-  if (currentMonth < 0) {
-    currentMonth = 11;
-    currentYear--;
-  } else if (currentMonth > 11) {
-    currentMonth = 0;
-    currentYear++;
+  if (summaryDiv) {
+    summaryDiv.innerHTML =
+      "📊 月別労働時間：<br>" +
+      Object.entries(summaryMonth).map(([m,t]) => `${m}: ${formatHours(t)} 時間`).join("<br>") +
+      "<br><br>" +
+      "📅 週別労働時間：<br>" +
+      Object.entries(summaryWeek).map(([w,t]) => `${w}: ${formatHours(t)} 時間`).join("<br>");
   }
-  renderCalendar();
 }
 
-// 全期間の日別労働時間を取得
-function getAllDailyTotals() {
-  const totals = {};
-  log.forEach(row => {
-    const date = row.date;
-    totals[date] = (totals[date] || 0) + parseFloat(row.hours);
-  });
-  return totals;
-}
 
-// 月名配列（日本語）
-const monthNamesJP = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
 
-// カレンダー描画関数
-function renderCalendar() {
-  const tbody = document.getElementById("calendar-body");
-  tbody.innerHTML = "";
-
-  // カレンダー上部に年月表示
-  const header = document.getElementById("calendar-header");
-  header.textContent = `${currentYear}年 ${monthNamesJP[currentMonth]}`;
-
-  // 月曜始まり対応の最初の曜日（0=月曜, 6=日曜）
-  const firstDay = new Date(currentYear, currentMonth, 1);
-  const lastDay = new Date(currentYear, currentMonth + 1, 0);
-  let firstWeekday = firstDay.getDay();
-  firstWeekday = (firstWeekday === 0) ? 6 : firstWeekday - 1;
-
-  const dailyTotals = getAllDailyTotals();
-
-  // 週開始日ごとの合計を計算するオブジェクト
-  const weeklyTotalsByWeekStart = {};
-
-  // --- カレンダーの前月部分を描画 ---
-  let tr = document.createElement("tr");
-  const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-  const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-  const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
-
-  for (let i = 0; i < firstWeekday; i++) {
-    const prevDay = prevMonthLastDay - (firstWeekday - i - 1);
-    const td = document.createElement("td");
-    td.className = "other-month";
-    const displayDate = `${prevMonth + 1}/${prevDay}`;
-    const dateStr = `${prevYear}-${String(prevMonth + 1).padStart(2, "0")}-${String(prevDay).padStart(2, "0")}`;
-    const dayHours = dailyTotals[dateStr] || 0;
-    td.innerHTML = `<strong>${displayDate}</strong><br>` + (dayHours ? formatHours(dayHours) + " 時間" : "");
-    tr.appendChild(td);
-
-    // 前月の日も週開始日を求めて合計に加算
-    const weekStart = getWeekStartDate(dateStr);
-    if (!weeklyTotalsByWeekStart[weekStart]) weeklyTotalsByWeekStart[weekStart] = 0;
-    weeklyTotalsByWeekStart[weekStart] += dayHours;
-  }
-
-  // --- 当月の日を描画 ---
-  const daysInMonth = lastDay.getDate();
-  for (let day = 1; day <= daysInMonth; day++) {
-    // 7日ごとに週合計セルを入れて行を閉じるための判定
-    if ((firstWeekday + day - 1) % 7 === 0 && day !== 1) {
-      // 今まで計算した週の開始日を求めて、その週合計を取得
-      const prevWeekDate = new Date(currentYear, currentMonth, day - 1);
-      const prevWeekStart = getWeekStartDate(prevWeekDate.toISOString().slice(0, 10));
-      const weekTotal = weeklyTotalsByWeekStart[prevWeekStart] || 0;
-
-      // 週合計セルを追加して行を閉じる
-      const weekTotalTd = document.createElement("td");
-      weekTotalTd.className = "week-total";
-      weekTotalTd.textContent = formatHours(weekTotal) + " 時間";
-      tr.appendChild(weekTotalTd);
-      tbody.appendChild(tr);
-
-      // 新しい行を開始
-      tr = document.createElement("tr");
-    }
-
-    const td = document.createElement("td");
-    td.style.verticalAlign = "top";
-    td.style.height = "60px";
-
-    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    const dayHours = dailyTotals[dateStr] || 0;
-
-    td.innerHTML = `<strong>${currentMonth + 1}/${day}</strong><br>` + (dayHours ? formatHours(dayHours) + " 時間" : "");
-    tr.appendChild(td);
-
-    // 週開始日を取得して週合計に加算
-    const weekStart = getWeekStartDate(dateStr);
-    if (!weeklyTotalsByWeekStart[weekStart]) weeklyTotalsByWeekStart[weekStart] = 0;
-    weeklyTotalsByWeekStart[weekStart] += dayHours;
-  }
-
-  // --- 翌月の日付で空白埋め ---
-  let nextDay = 1;
-  const nextMonth = (currentMonth + 1) % 12;
-  const nextYear = (currentMonth === 11) ? currentYear + 1 : currentYear;
-  while (tr.children.length < 7) {
-    const td = document.createElement("td");
-    td.className = "other-month";
-    const displayDate = `${nextMonth + 1}/${nextDay}`;
-    const dateStr = `${nextYear}-${String(nextMonth + 1).padStart(2, "0")}-${String(nextDay).padStart(2, "0")}`;
-    const dayHours = dailyTotals[dateStr] || 0;
-    td.innerHTML = `<strong>${displayDate}</strong><br>` + (dayHours ? formatHours(dayHours) + " 時間" : "");
-    tr.appendChild(td);
-
-    // 翌月の日も週合計に加算
-    const weekStart = getWeekStartDate(dateStr);
-    if (!weeklyTotalsByWeekStart[weekStart]) weeklyTotalsByWeekStart[weekStart] = 0;
-    weeklyTotalsByWeekStart[weekStart] += dayHours;
-
-    nextDay++;
-  }
-
-  // 最後の週の合計を入れてテーブルに追加
-  const lastDayDateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(daysInMonth).padStart(2, "0")}`;
-  const lastWeekStart = getWeekStartDate(lastDayDateStr);
-  const lastWeekTotal = weeklyTotalsByWeekStart[lastWeekStart] || 0;
-
-  const lastWeekTotalTd = document.createElement("td");
-  lastWeekTotalTd.className = "week-total";
-  lastWeekTotalTd.textContent = formatHours(lastWeekTotal) + " 時間";
-  tr.appendChild(lastWeekTotalTd);
-  tbody.appendChild(tr);
-}
-// --- エクスポート関数 ---
-function exportData() {
-  const dataStr = JSON.stringify(log, null, 2);
-  const blob = new Blob([dataStr], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "kintai_log.json";
-  a.click();
-
-  URL.revokeObjectURL(url);
-}
-
-// --- インポート関数 ---
-function importData() {
-  const input = document.getElementById("importFile");
-  if (!input.files.length) {
-    alert("ファイルを選択してください");
-    return;
-  }
-
-  const file = input.files[0];
-  const reader = new FileReader();
-
-  reader.onload = function(e) {
-    try {
-      const importedData = JSON.parse(e.target.result);
-      if (Array.isArray(importedData)) {
-        log = importedData;
-        saveAndRender();
-        alert("インポート成功しました");
-      } else {
-        alert("無効なファイル形式です");
-      }
-    } catch (err) {
-      alert("読み込みエラー: " + err.message);
-    }
-  };
-
-  reader.readAsText(file);
-}
 
 // ページ読み込み時初期化
-initCalendar();
-render();
+document.addEventListener('DOMContentLoaded', () => {
+  // calendar.js の関数が読み込まれていることを確認してから呼び出す
+  if (typeof initCalendar === 'function') {
+    initCalendar();
+  }
+  render(); // 初期表示
+});
