@@ -85,7 +85,11 @@ function createDateCell(dateStr, displayMonth, displayDay, dailyTotals, isOtherM
   }
 
   const dayHours = dailyTotals[dateStr] || 0;
-  td.innerHTML = `<strong>${displayMonth}/${displayDay}</strong><br>` + (dayHours ? formatHours(dayHours) + " 時間" : "");
+  
+  // ✨修正: 時間表示部分をspanで囲み、クラスを付与する✨
+  const hoursHtml = dayHours ? `<span class="daily-hours">${formatHours(dayHours)} 時間</span>` : "";
+
+  td.innerHTML = `<strong>${displayMonth}/${displayDay}</strong><br>${hoursHtml}`;
   return td;
 }
 
@@ -99,7 +103,7 @@ function createWeekTotalCell(totalHours, cumulativeTotalHours) { // ✨引数を
   const weekTotalTd = document.createElement("td");
   weekTotalTd.className = "week-total";
   // ✨表示内容を週合計と累計の2行にする✨
-  weekTotalTd.innerHTML = `${formatHours(totalHours)} h<br>${formatHours(cumulativeTotalHours)} h`;
+  weekTotalTd.innerHTML = `${formatHours(totalHours)} 時間<br>${formatHours(cumulativeTotalHours)} 時間`;
   return weekTotalTd;
 }
 

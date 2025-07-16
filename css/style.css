@@ -128,3 +128,9 @@ input[type="text"]#memo {
 #calendar td.other-month {
   color: #aaa;
 }
+/* ✨追加するCSSルール: 日付セル内の時間表示を右寄せにするスタイル✨ */
+.daily-hours {
+  display: block;    /* インライン要素である<span>をブロック要素として扱わせる */
+  text-align: left; /* テキストを右寄せにする */
+  padding-right: 2px; /* オプション: 右端に少し余白を入れて見栄えを良くする */
+}
