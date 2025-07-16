@@ -90,14 +90,16 @@ function createDateCell(dateStr, displayMonth, displayDay, dailyTotals, isOtherM
 }
 
 /**
- * 週合計のセルを作成し、週の労働時間を表示します。
+ * 週合計のセルを作成し、週の労働時間と累計労働時間を表示します。
  * @param {number} totalHours - 週の合計労働時間
+ * @param {number} cumulativeTotalHours - その時点までの累計労働時間 ✨追加✨
  * @returns {HTMLElement} 作成されたtd要素
  */
-function createWeekTotalCell(totalHours) {
+function createWeekTotalCell(totalHours, cumulativeTotalHours) { // ✨引数を追加✨
   const weekTotalTd = document.createElement("td");
   weekTotalTd.className = "week-total";
-  weekTotalTd.textContent = formatHours(totalHours) + " 時間";
+  // ✨表示内容を週合計と累計の2行にする✨
+  weekTotalTd.innerHTML = `${formatHours(totalHours)} h<br>${formatHours(cumulativeTotalHours)} h`;
   return weekTotalTd;
 }
 
@@ -120,6 +122,7 @@ function renderCalendar() {
 
   const dailyTotals = getAllDailyTotals();
   const weeklyTotalsByWeekStart = {}; // 週開始日ごとの合計を計算するオブジェクト
+  let cumulativeTotalHours = 0; // 
 
   let tr = document.createElement("tr");
 
@@ -148,7 +151,9 @@ function renderCalendar() {
       const prevWeekStart = getWeekStartDate(prevWeekDate.toISOString().slice(0, 10));
       const weekTotal = weeklyTotalsByWeekStart[prevWeekStart] || 0;
 
-      tr.appendChild(createWeekTotalCell(weekTotal));
+      cumulativeTotalHours += weekTotal; // 週合計を累計に加算
+
+      tr.appendChild(createWeekTotalCell(weekTotal,cumulativeTotalHours));
       tbody.appendChild(tr);
       tr = document.createElement("tr"); // 新しい行を開始
     }
@@ -182,6 +187,7 @@ function renderCalendar() {
   const lastWeekStart = getWeekStartDate(lastDayDateStr);
   const lastWeekTotal = weeklyTotalsByWeekStart[lastWeekStart] || 0;
 
-  tr.appendChild(createWeekTotalCell(lastWeekTotal));
+  cumulativeTotalHours = (cumulativeTotalHours || 0) + (lastWeekTotal || 0);
+  tr.appendChild(createWeekTotalCell(lastWeekTotal, cumulativeTotalHours));
   tbody.appendChild(tr);
 }
