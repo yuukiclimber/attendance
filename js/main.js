@@ -69,7 +69,9 @@ function render() {
     tbody.appendChild(tr);
   });
 
-  renderSummary();
+  // サマリーの描画
+  // renderSummary();
+
   // カレンダーの描画は calendar.js の関数を呼び出す
   // log データに変更があった場合はカレンダーも更新する必要があるため、呼び出しが必要です。
   if (typeof renderCalendar === 'function') {
