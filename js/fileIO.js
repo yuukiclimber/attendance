@@ -1,42 +1,46 @@
-// --- インポート関数 ---
-function importData() {
-  const input = document.getElementById("importFile");
-  if (!input || !input.files.length) {
-    alert("ファイルを選択してください");
-    return;
+class FileIO {
+  constructor(appInstance) {
+    this.app = appInstance;
   }
 
-  const file = input.files[0];
-  const reader = new FileReader();
-
-  reader.onload = function(e) {
-    try {
-      const importedData = JSON.parse(e.target.result);
-      if (Array.isArray(importedData)) {
-        log = importedData; // log を更新
-        saveAndRender();
-        alert("インポート成功しました");
-      } else {
-        alert("無効なファイル形式です");
-      }
-    } catch (err) {
-      alert("読み込みエラー: " + err.message);
+  importData() {
+    const input = document.getElementById('importFile');
+    if (!input || !input.files.length) {
+      alert('ファイルを選択してください');
+      return;
     }
-  };
 
-  reader.readAsText(file);
-}
+    const file = input.files[0];
+    const reader = new FileReader();
 
-// --- エクスポート関数 ---
-function exportData() {
-  const dataStr = JSON.stringify(log, null, 2);
-  const blob = new Blob([dataStr], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
+    reader.onload = (e) => {
+      try {
+        const importedData = JSON.parse(e.target.result);
+        if (Array.isArray(importedData)) {
+          this.app.log = importedData;
+          this.app.saveAndRender();
+          alert('インポート成功しました');
+        } else {
+          alert('無効なファイル形式です');
+        }
+      } catch (err) {
+        alert('読み込みエラー: ' + err.message);
+      }
+    };
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "kintai_log.json";
-  a.click();
+    reader.readAsText(file);
+  }
 
-  URL.revokeObjectURL(url);
+  exportData() {
+    const dataStr = JSON.stringify(this.app.log, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'kintai_log.json';
+    a.click();
+
+    URL.revokeObjectURL(url);
+  }
 }

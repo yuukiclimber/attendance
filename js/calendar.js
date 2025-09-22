@@ -1,197 +1,174 @@
 // calendar.js
-// カレンダー表示に関する関数をまとめたファイル
+// CalendarView クラスにまとめたカレンダー表示ロジック
+// calendar.js
+// CalendarView クラスにまとめたカレンダー表示ロジック
 
-// 勤怠ログデータ（main.jsから共有されることを想定）
-// もしくは、カレンダー内で必要なデータのみを引数として渡すように変更することも検討
-// 例: renderCalendar(logData) のように
-
-let currentYear, currentMonth; // カレンダー表示用変数
-
-// 月名配列（日本語）
-const monthNamesJP = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
-
-
-
-/**
- * 全期間の日別労働時間を取得
- * log データに依存するため、log のスコープを適切に管理する必要があります。
- * この例では、グローバルな log 変数にアクセスすることを前提とします。
- */
-function getAllDailyTotals() {
-  const totals = {};
-  // log は main.js で定義されているグローバル変数、またはここへ渡される想定
-  if (typeof log !== 'undefined' && Array.isArray(log)) {
-    log.forEach(row => {
-      const date = row.date;
-      totals[date] = (totals[date] || 0) + parseFloat(row.hours);
-    });
-  }
-  return totals;
-}
-
-
-/**
- * カレンダーを初期化します。
- */
-function initCalendar() {
-  const today = new Date();
-  currentYear = today.getFullYear();
-  currentMonth = today.getMonth(); // 0=1月
-  renderCalendar();
-}
-
-/**
- * 月を切り替えます。
- * @param {number} diff - 月の差分 (+1で翌月, -1で前月)
- */
-function changeMonth(diff) {
-  currentMonth += diff;
-  if (currentMonth < 0) {
-    currentMonth = 11;
-    currentYear--;
-  } else if (currentMonth > 11) {
-    currentMonth = 0;
-    currentYear++;
-  }
-  renderCalendar();
-}
-
-/**
- * カレンダーのヘッダー（年月）を更新します。
- */
-function updateCalendarHeader() {
-  const header = document.getElementById("calendar-header");
-  if (header) {
-    header.textContent = `${currentYear}年 ${monthNamesJP[currentMonth]}`;
-  }
-}
-
-/**
- * 日付のセルを作成し、日付と日ごとの労働時間を表示します。
- * @param {string} dateStr - YYYY-MM-DD形式の日付文字列
- * @param {number} displayMonth - 表示する月の数値 (1-12)
- * @param {number} displayDay - 表示する日の数値
- * @param {Object} dailyTotals - 日ごとの労働時間合計を格納したオブジェクト
- * @param {boolean} isOtherMonth - 他の月の場合はtrue
- * @returns {HTMLElement} 作成されたtd要素
- */
-function createDateCell(dateStr, displayMonth, displayDay, dailyTotals, isOtherMonth = false) {
-  const td = document.createElement("td");
-  if (isOtherMonth) {
-    td.className = "other-month";
-  } else {
-    td.style.verticalAlign = "top";
-    td.style.height = "60px";
+class CalendarView {
+  constructor() {
+    this.currentYear = null;
+    this.currentMonth = null;
+    this.monthNamesJP = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
   }
 
-  const dayHours = dailyTotals[dateStr] || 0;
-  
-  // ✨修正: 時間表示部分をspanで囲み、クラスを付与する✨
-  const hoursHtml = dayHours ? `<span class="daily-hours">${formatHours(dayHours)} 時間</span>` : "";
-
-  td.innerHTML = `<strong>${displayMonth}/${displayDay}</strong><br>${hoursHtml}`;
-  return td;
-}
-
-/**
- * 週合計のセルを作成し、週の労働時間と累計労働時間を表示します。
- * @param {number} totalHours - 週の合計労働時間
- * @param {number} cumulativeTotalHours - その時点までの累計労働時間 ✨追加✨
- * @returns {HTMLElement} 作成されたtd要素
- */
-function createWeekTotalCell(totalHours, cumulativeTotalHours) { // ✨引数を追加✨
-  const weekTotalTd = document.createElement("td");
-  weekTotalTd.className = "week-total";
-  // ✨表示内容を週合計と累計の2行にする✨
-  weekTotalTd.innerHTML = `${formatHours(totalHours)} 時間<br>${formatHours(cumulativeTotalHours)} 時間`;
-  return weekTotalTd;
-}
-
-/**
- * カレンダーグリッド全体を描画します。
- */
-function renderCalendar() {
-  const tbody = document.getElementById("calendar-body");
-  if (!tbody) return; // tbodyが存在しない場合は処理を終了
-
-  tbody.innerHTML = "";
-
-  updateCalendarHeader(); // ヘッダー更新
-
-  // 月曜始まり対応の最初の曜日（0=月曜, 6=日曜）
-  const firstDay = new Date(currentYear, currentMonth, 1);
-  const lastDay = new Date(currentYear, currentMonth + 1, 0);
-  let firstWeekday = firstDay.getDay();
-//   firstWeekday = (firstWeekday === 0) ? 6 : firstWeekday - 1;
-
-  const dailyTotals = getAllDailyTotals();
-  const weeklyTotalsByWeekStart = {}; // 週開始日ごとの合計を計算するオブジェクト
-  let cumulativeTotalHours = 0; // 
-
-  let tr = document.createElement("tr");
-
-  // --- カレンダーの前月部分を描画 ---
-  const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-  const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-  const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
-
-  for (let i = 0; i < firstWeekday; i++) {
-    const prevDay = prevMonthLastDay - (firstWeekday - i - 1);
-    const dateStr = `${prevYear}-${String(prevMonth + 1).padStart(2, "0")}-${String(prevDay).padStart(2, "0")}`;
-    const dayHours = dailyTotals[dateStr] || 0;
-
-    tr.appendChild(createDateCell(dateStr, prevMonth + 1, prevDay, dailyTotals, true));
-
-    const weekStart = getWeekStartDate(dateStr);
-    weeklyTotalsByWeekStart[weekStart] = (weeklyTotalsByWeekStart[weekStart] || 0) + dayHours;
+  init() {
+    const today = new Date();
+    this.currentYear = today.getFullYear();
+    this.currentMonth = today.getMonth();
+    this.render([]);
   }
 
-  // --- 当月の日を描画 ---
-  const daysInMonth = lastDay.getDate();
-  for (let day = 1; day <= daysInMonth; day++) {
-    // 7日ごとに週合計セルを入れて行を閉じるための判定
-    if ((firstWeekday + day - 1) % 7 === 0 && day !== 1) {
-      const prevWeekDate = new Date(currentYear, currentMonth, day - 1);
-      const prevWeekStart = getWeekStartDate(prevWeekDate.toISOString().slice(0, 10));
-      const weekTotal = weeklyTotalsByWeekStart[prevWeekStart] || 0;
+  changeMonth(diff) {
+    this.currentMonth += diff;
+    if (this.currentMonth < 0) {
+      this.currentMonth = 11;
+      this.currentYear--;
+    } else if (this.currentMonth > 11) {
+      this.currentMonth = 0;
+      this.currentYear++;
+    }
+    // app.render() 呼び出しで calendar.render(this.log) が呼ばれるようにするのが自然
+    if (typeof app !== 'undefined' && app) {
+      app.render();
+    } else {
+      this.render([]);
+    }
+  }
 
-      cumulativeTotalHours += weekTotal; // 週合計を累計に加算
+  updateCalendarHeader() {
+    const header = document.getElementById('calendar-header');
+    if (header) {
+      header.textContent = `${this.currentYear}年 ${this.monthNamesJP[this.currentMonth]}`;
+    }
+  }
 
-      tr.appendChild(createWeekTotalCell(weekTotal,cumulativeTotalHours));
-      tbody.appendChild(tr);
-      tr = document.createElement("tr"); // 新しい行を開始
+  getAllDailyTotals(log) {
+    const totals = {};
+    if (Array.isArray(log)) {
+      log.forEach(row => {
+        const date = row.date;
+        totals[date] = (totals[date] || 0) + parseFloat(row.hours);
+      });
+    }
+    return totals;
+  }
+
+  createDateCell(dateStr, displayMonth, displayDay, dailyTotals, isOtherMonth = false) {
+    const td = document.createElement('td');
+    if (isOtherMonth) {
+      td.className = 'other-month';
+    } else {
+      td.style.verticalAlign = 'top';
+      td.style.height = '60px';
     }
 
-    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     const dayHours = dailyTotals[dateStr] || 0;
-
-    tr.appendChild(createDateCell(dateStr, currentMonth + 1, day, dailyTotals));
-
-    const weekStart = getWeekStartDate(dateStr);
-    weeklyTotalsByWeekStart[weekStart] = (weeklyTotalsByWeekStart[weekStart] || 0) + dayHours;
+    const hoursHtml = dayHours ? `<span class="daily-hours">${formatHours(dayHours)} 時間</span>` : '';
+    td.innerHTML = `<strong>${displayMonth}/${displayDay}</strong><br>${hoursHtml}`;
+    return td;
   }
 
-  // --- 翌月の日付で空白埋め ---
-  let nextDay = 1;
-  const nextMonth = (currentMonth + 1) % 12;
-  const nextYear = (currentMonth === 11) ? currentYear + 1 : currentYear;
-  while (tr.children.length < 7) {
-    const dateStr = `${nextYear}-${String(nextMonth + 1).padStart(2, "0")}-${String(nextDay).padStart(2, "0")}`;
-    const dayHours = dailyTotals[dateStr] || 0;
-
-    tr.appendChild(createDateCell(dateStr, nextMonth + 1, nextDay, dailyTotals, true));
-
-    const weekStart = getWeekStartDate(dateStr);
-    weeklyTotalsByWeekStart[weekStart] = (weeklyTotalsByWeekStart[weekStart] || 0) + dayHours;
-    nextDay++;
+  createWeekTotalCell(totalHours, cumulativeTotalHours) {
+    const weekTotalTd = document.createElement('td');
+    weekTotalTd.className = 'week-total';
+    weekTotalTd.innerHTML = `${formatHours(totalHours)} 時間<br>${formatHours(cumulativeTotalHours)} 時間`;
+    return weekTotalTd;
   }
 
-  // 最後の週の合計を入れてテーブルに追加
-  const lastDayDateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(daysInMonth).padStart(2, "0")}`;
-  const lastWeekStart = getWeekStartDate(lastDayDateStr);
-  const lastWeekTotal = weeklyTotalsByWeekStart[lastWeekStart] || 0;
+  render(log) {
+    const tbody = document.getElementById('calendar-body');
+    if (!tbody) return;
+    tbody.innerHTML = '';
 
-  cumulativeTotalHours = (cumulativeTotalHours || 0) + (lastWeekTotal || 0);
-  tr.appendChild(createWeekTotalCell(lastWeekTotal, cumulativeTotalHours));
-  tbody.appendChild(tr);
+    if (this.currentYear === null) {
+      this.init();
+    }
+
+    this.updateCalendarHeader();
+
+    const firstDay = new Date(this.currentYear, this.currentMonth, 1);
+    const lastDay = new Date(this.currentYear, this.currentMonth + 1, 0);
+    let firstWeekday = firstDay.getDay();
+
+    const dailyTotals = this.getAllDailyTotals(log || []);
+    const weeklyTotalsByWeekStart = {};
+    let cumulativeTotalHours = 0;
+
+    let tr = document.createElement('tr');
+
+    const prevMonth = this.currentMonth === 0 ? 11 : this.currentMonth - 1;
+    const prevYear = this.currentMonth === 0 ? this.currentYear - 1 : this.currentYear;
+    const prevMonthLastDay = new Date(this.currentYear, this.currentMonth, 0).getDate();
+
+    for (let i = 0; i < firstWeekday; i++) {
+      const prevDay = prevMonthLastDay - (firstWeekday - i - 1);
+      const dateStr = `${prevYear}-${String(prevMonth + 1).padStart(2, "0")}-${String(prevDay).padStart(2, "0")}`;
+      const dayHours = dailyTotals[dateStr] || 0;
+
+      tr.appendChild(this.createDateCell(dateStr, prevMonth + 1, prevDay, dailyTotals, true));
+
+      const weekStart = getWeekStartDate(dateStr);
+      weeklyTotalsByWeekStart[weekStart] = (weeklyTotalsByWeekStart[weekStart] || 0) + dayHours;
+    }
+
+    const daysInMonth = lastDay.getDate();
+    for (let day = 1; day <= daysInMonth; day++) {
+      if ((firstWeekday + day - 1) % 7 === 0 && day !== 1) {
+        const prevWeekDate = new Date(this.currentYear, this.currentMonth, day - 1);
+        const prevWeekStart = getWeekStartDate(prevWeekDate.toISOString().slice(0, 10));
+        const weekTotal = weeklyTotalsByWeekStart[prevWeekStart] || 0;
+
+        cumulativeTotalHours += weekTotal;
+        tr.appendChild(this.createWeekTotalCell(weekTotal, cumulativeTotalHours));
+        tbody.appendChild(tr);
+        tr = document.createElement('tr');
+      }
+
+      const dateStr = `${this.currentYear}-${String(this.currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const dayHours = dailyTotals[dateStr] || 0;
+
+      tr.appendChild(this.createDateCell(dateStr, this.currentMonth + 1, day, dailyTotals));
+
+      const weekStart = getWeekStartDate(dateStr);
+      weeklyTotalsByWeekStart[weekStart] = (weeklyTotalsByWeekStart[weekStart] || 0) + dayHours;
+    }
+
+    let nextDay = 1;
+    const nextMonth = (this.currentMonth + 1) % 12;
+    const nextYear = (this.currentMonth === 11) ? this.currentYear + 1 : this.currentYear;
+    while (tr.children.length < 7) {
+      const dateStr = `${nextYear}-${String(nextMonth + 1).padStart(2, "0")}-${String(nextDay).padStart(2, "0")}`;
+      const dayHours = dailyTotals[dateStr] || 0;
+
+      tr.appendChild(this.createDateCell(dateStr, nextMonth + 1, nextDay, dailyTotals, true));
+
+      const weekStart = getWeekStartDate(dateStr);
+      weeklyTotalsByWeekStart[weekStart] = (weeklyTotalsByWeekStart[weekStart] || 0) + dayHours;
+      nextDay++;
+    }
+
+    const lastDayDateStr = `${this.currentYear}-${String(this.currentMonth + 1).padStart(2, "0")}-${String(daysInMonth).padStart(2, "0")}`;
+    const lastWeekStart = getWeekStartDate(lastDayDateStr);
+    const lastWeekTotal = weeklyTotalsByWeekStart[lastWeekStart] || 0;
+
+    cumulativeTotalHours = (cumulativeTotalHours || 0) + (lastWeekTotal || 0);
+    tr.appendChild(this.createWeekTotalCell(lastWeekTotal, cumulativeTotalHours));
+    tbody.appendChild(tr);
+  }
+}
+
+// 互換性のためのグローバルラッパー（既存HTMLからの呼び出しを維持）
+let _calendarInstance = null;
+function initCalendar() {
+  if (!_calendarInstance) _calendarInstance = new CalendarView();
+  _calendarInstance.init();
+}
+
+function renderCalendar() {
+  if (!_calendarInstance) _calendarInstance = new CalendarView();
+  _calendarInstance.render(window.app ? window.app.log : []);
+}
+
+function changeMonth(diff) {
+  if (!_calendarInstance) _calendarInstance = new CalendarView();
+  _calendarInstance.changeMonth(diff);
 }
