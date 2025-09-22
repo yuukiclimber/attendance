@@ -4,3 +4,8 @@ python3 -m http.server 8000
 
 ブラウザで
 http://localhost:8000
+
+リファクタリングメモ:
+- js/* に JSDoc 型注釈を追加しました（utils.js, fileIO.js, calendar.js, main.js）。
+- index.html の script タグに defer を追加して安全に読み込むようにしました。
+- ローカルサーバーは上記コマンドで起動できます。

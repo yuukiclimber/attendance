@@ -1,8 +1,25 @@
+/**
+ * @typedef {Object} AppInterface
+ * @property {KintaiEntry[]} log
+ * @property {function():void} saveAndRender
+ */
+
+/**
+ * ファイル入出力を担当するユーティリティクラス
+ */
 class FileIO {
+  /**
+   * @param {AppInterface} appInstance
+   */
   constructor(appInstance) {
+    /** @private @type {AppInterface} */
     this.app = appInstance;
   }
 
+  /**
+   * JSON ファイルを読み込み、アプリのログを置き換えます。
+   * @returns {void}
+   */
   importData() {
     const input = document.getElementById('importFile');
     if (!input || !input.files.length) {
@@ -15,6 +32,7 @@ class FileIO {
 
     reader.onload = (e) => {
       try {
+        /** @type {any} */
         const importedData = JSON.parse(e.target.result);
         if (Array.isArray(importedData)) {
           this.app.log = importedData;
@@ -31,6 +49,10 @@ class FileIO {
     reader.readAsText(file);
   }
 
+  /**
+   * アプリログを JSON としてエクスポートします。
+   * @returns {void}
+   */
   exportData() {
     const dataStr = JSON.stringify(this.app.log, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });

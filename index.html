@@ -53,9 +53,10 @@
 	<!-- エクスポート -->
 	<button onclick="exportData()">エクスポート</button>
 
-	<script src="js/utils.js"></script>
-	<script src="js/fileIO.js"></script>
-	<script src="js/calendar.js"></script>
-	<script src="js/main.js"></script>
+	<!-- スクリプトは defer を付けて読み込み順を保証 -->
+	<script src="js/utils.js" defer></script>
+	<script src="js/fileIO.js" defer></script>
+	<script src="js/calendar.js" defer></script>
+	<script src="js/main.js" defer></script>
 </body>
 </html>

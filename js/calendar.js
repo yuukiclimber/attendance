@@ -3,13 +3,27 @@
 // calendar.js
 // CalendarView クラスにまとめたカレンダー表示ロジック
 
+/**
+ * CalendarView 用の JSDoc と型注釈
+ */
+/**
+ * @typedef {import('./utils.js').KintaiEntry | KintaiEntry} _KintaiEntryAlias
+ */
+
 class CalendarView {
   constructor() {
+    /** @type {number|null} */
     this.currentYear = null;
+    /** @type {number|null} */
     this.currentMonth = null;
+    /** @type {string[]} */
     this.monthNamesJP = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
   }
 
+  /**
+   * 初期化
+   * @returns {void}
+   */
   init() {
     const today = new Date();
     this.currentYear = today.getFullYear();
@@ -17,6 +31,11 @@ class CalendarView {
     this.render([]);
   }
 
+  /**
+   * 月切り替え
+   * @param {number} diff
+   * @returns {void}
+   */
   changeMonth(diff) {
     this.currentMonth += diff;
     if (this.currentMonth < 0) {
@@ -26,7 +45,6 @@ class CalendarView {
       this.currentMonth = 0;
       this.currentYear++;
     }
-    // app.render() 呼び出しで calendar.render(this.log) が呼ばれるようにするのが自然
     if (typeof app !== 'undefined' && app) {
       app.render();
     } else {
@@ -34,13 +52,22 @@ class CalendarView {
     }
   }
 
+  /**
+   * カレンダーヘッダ更新
+   * @returns {void}
+   */
   updateCalendarHeader() {
     const header = document.getElementById('calendar-header');
-    if (header) {
+    if (header && this.currentYear !== null && this.currentMonth !== null) {
       header.textContent = `${this.currentYear}年 ${this.monthNamesJP[this.currentMonth]}`;
     }
   }
 
+  /**
+   * すべての日ごとの合計を取得
+   * @param {KintaiEntry[]} log
+   * @returns {Object.<string, number>}
+   */
   getAllDailyTotals(log) {
     const totals = {};
     if (Array.isArray(log)) {
@@ -52,6 +79,15 @@ class CalendarView {
     return totals;
   }
 
+  /**
+   * 日付セル作成
+   * @param {string} dateStr
+   * @param {number} displayMonth
+   * @param {number} displayDay
+   * @param {Object.<string, number>} dailyTotals
+   * @param {boolean} [isOtherMonth=false]
+   * @returns {HTMLTableCellElement}
+   */
   createDateCell(dateStr, displayMonth, displayDay, dailyTotals, isOtherMonth = false) {
     const td = document.createElement('td');
     if (isOtherMonth) {
@@ -67,6 +103,12 @@ class CalendarView {
     return td;
   }
 
+  /**
+   * 週合計セル作成
+   * @param {number} totalHours
+   * @param {number} cumulativeTotalHours
+   * @returns {HTMLTableCellElement}
+   */
   createWeekTotalCell(totalHours, cumulativeTotalHours) {
     const weekTotalTd = document.createElement('td');
     weekTotalTd.className = 'week-total';
@@ -74,6 +116,11 @@ class CalendarView {
     return weekTotalTd;
   }
 
+  /**
+   * カレンダー描画
+   * @param {KintaiEntry[]} log
+   * @returns {void}
+   */
   render(log) {
     const tbody = document.getElementById('calendar-body');
     if (!tbody) return;
