@@ -1,42 +1,68 @@
-// --- インポート関数 ---
-function importData() {
-  const input = document.getElementById("importFile");
-  if (!input || !input.files.length) {
-    alert("ファイルを選択してください");
-    return;
+/**
+ * @typedef {Object} AppInterface
+ * @property {KintaiEntry[]} log
+ * @property {function():void} saveAndRender
+ */
+
+/**
+ * ファイル入出力を担当するユーティリティクラス
+ */
+class FileIO {
+  /**
+   * @param {AppInterface} appInstance
+   */
+  constructor(appInstance) {
+    /** @private @type {AppInterface} */
+    this.app = appInstance;
   }
 
-  const file = input.files[0];
-  const reader = new FileReader();
-
-  reader.onload = function(e) {
-    try {
-      const importedData = JSON.parse(e.target.result);
-      if (Array.isArray(importedData)) {
-        log = importedData; // log を更新
-        saveAndRender();
-        alert("インポート成功しました");
-      } else {
-        alert("無効なファイル形式です");
-      }
-    } catch (err) {
-      alert("読み込みエラー: " + err.message);
+  /**
+   * JSON ファイルを読み込み、アプリのログを置き換えます。
+   * @returns {void}
+   */
+  importData() {
+    const input = document.getElementById('importFile');
+    if (!input || !input.files.length) {
+      alert('ファイルを選択してください');
+      return;
     }
-  };
 
-  reader.readAsText(file);
-}
+    const file = input.files[0];
+    const reader = new FileReader();
 
-// --- エクスポート関数 ---
-function exportData() {
-  const dataStr = JSON.stringify(log, null, 2);
-  const blob = new Blob([dataStr], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
+    reader.onload = (e) => {
+      try {
+        /** @type {any} */
+        const importedData = JSON.parse(e.target.result);
+        if (Array.isArray(importedData)) {
+          this.app.log = importedData;
+          this.app.saveAndRender();
+          alert('インポート成功しました');
+        } else {
+          alert('無効なファイル形式です');
+        }
+      } catch (err) {
+        alert('読み込みエラー: ' + err.message);
+      }
+    };
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "kintai_log.json";
-  a.click();
+    reader.readAsText(file);
+  }
 
-  URL.revokeObjectURL(url);
+  /**
+   * アプリログを JSON としてエクスポートします。
+   * @returns {void}
+   */
+  exportData() {
+    const dataStr = JSON.stringify(this.app.log, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'kintai_log.json';
+    a.click();
+
+    URL.revokeObjectURL(url);
+  }
 }
