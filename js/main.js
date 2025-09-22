@@ -221,10 +221,7 @@ class KintaiApp {
     if (summaryDiv) {
       summaryDiv.innerHTML =
         '📊 月別労働時間：<br>' +
-        Object.entries(summaryMonth).map(([m,t]) => `${m}: ${formatHours(t)} 時間`).join('<br>') +
-        '<br><br>' +
-        '📅 週別労働時間：<br>' +
-        Object.entries(summaryWeek).map(([w,t]) => `${w}: ${formatHours(t)} 時間`).join('<br>');
+        Object.entries(summaryMonth).map(([m,t]) => `${m}: ${formatHours(t)} 時間`).join('<br>')
     }
   }
 }
